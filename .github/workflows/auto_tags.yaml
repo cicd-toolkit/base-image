@@ -4,6 +4,9 @@ on:
     branches:
     - master
 
+permissions:
+  contents: write
+
 jobs:
   tag_repo:
     name: Tag on merge in master
