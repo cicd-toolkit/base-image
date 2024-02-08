@@ -2,9 +2,11 @@ name: build-docker-image
 
 on:
   push:
-    tags: ["*"]
+    branches:
+    - master
 
-
+permissions:
+  contents: write
 
 jobs:
   push_to_registries:
@@ -24,21 +26,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5.5.1
-        with:
-          images: |
-            ghcr.io/${{ github.repository }}
-          tags: |
-            # branch event
-            type=ref,event=branch
-            # tag event
-            type=ref,event=tag
+      - name: Tag and push current repo code
+        id: get-tag
+        run: |
+          last_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          new_tag=$(echo $last_tag | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
+          git tag $new_tag
+          git push origin $new_tag
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v5.1.0
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.get-tag.outputs.tag }}
