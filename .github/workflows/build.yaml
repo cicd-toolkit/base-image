@@ -1,0 +1,44 @@
+name: build-docker-image
+
+on:
+  push:
+    tags: ["*"]
+
+
+
+jobs:
+  push_to_registries:
+    name: Push Docker image to multiple registries
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            # branch event
+            type=ref,event=branch
+            # tag event
+            type=ref,event=tag
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}

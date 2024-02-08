@@ -1,0 +1,23 @@
+name: auto_tag
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  tag_repo:
+    name: Tag on merge in master
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Tag and push current repo code
+      run: |
+        last_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+        new_tag=$(echo $last_tag | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+        git tag $new_tag
+        git push origin $new_tag
