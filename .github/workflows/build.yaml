@@ -7,14 +7,12 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   push_to_registries:
-    name: Push Docker image to multiple registries
+    name: Push Docker image
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -32,7 +30,9 @@ jobs:
         id: get-tag
         run: |
           last_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo $last_tag
           new_tag=$(echo $last_tag | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          echo $new_tag
           echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
           git tag $new_tag
           git push origin $new_tag
